@@ -15,6 +15,7 @@ JS_FILES+= $(shell find $(JS_SRC_DIR)/workers -type f -name "*.js")
 
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-wasm.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-mt-wasm.js
+EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-ffmpeg-wasm.js
 
 ifdef SIMD
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-simd-wasm.js
@@ -95,6 +96,8 @@ dist: js README.md COPYING
 	      build/ogv-decoder-video-vp9-mt-wasm.js \
 	      build/ogv-decoder-video-vp9-mt-wasm.wasm \
 	      build/ogv-decoder-video-vp9-mt-wasm.worker.js \
+		  build/ogv-decoder-video-ffmpeg-wasm.js \
+	      build/ogv-decoder-video-ffmpeg-wasm.wasm \
 	      build/ogv-worker-audio.js \
 	      build/ogv-worker-video.js \
 	      README.md \
@@ -147,6 +150,11 @@ $(WASMSIMD_ROOT_BUILD_DIR)/lib/libvpx.a : $(BUILDSCRIPTS_DIR)/compileVpxWasmSIMD
 $(WASMSIMDMT_ROOT_BUILD_DIR)/lib/libvpx.a : $(BUILDSCRIPTS_DIR)/compileVpxWasmSIMDMT.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileVpxWasmSIMDMT.sh
+
+$(WASM_ROOT_BUILD_DIR)/lib/libavcodec.a : $(BUILDSCRIPTS_DIR)/compileFFmpegWasm.sh
+	test -d build || mkdir -p build
+	./$(BUILDSCRIPTS_DIR)/compileFFmpegWasm.sh
+
 
 # Compile our Emscripten modules
 
@@ -201,6 +209,19 @@ build/ogv-decoder-video-vp9-simd-mt-wasm.js : $(C_SRC_DIR)/ogv-decoder-video-vpx
                                               $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9SIMDMT.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9SIMDMT.sh
+
+build/ogv-decoder-video-ffmpeg-wasm.js : $(C_SRC_DIR)/ogv-decoder-video-ffmpeg.c \
+                                      $(C_SRC_DIR)/ogv-decoder-video.h \
+     								 $(C_SRC_DIR)/ogv-thread-support.h \
+                                      $(JS_SRC_DIR)/modules/ogv-decoder-video.js \
+                                      $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
+                                      $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
+                                      $(JS_SRC_DIR)/modules/ogv-module-pre.js \
+                                      $(WASM_ROOT_BUILD_DIR)/lib/libavcodec.a \
+                                      $(BUILDSCRIPTS_DIR)/compile-options.sh \
+                                      $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoFFmpeg.sh
+	test -d build || mkdir -p build
+	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoFFmpeg.sh
 
 # Install dev dependencies
 
